@@ -1,0 +1,48 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD /tmp/ccDrYEwg.o
+LOAD /tmp/ccOsUTq0.o
+
+.memory         0x00000000      0x2b8
+                0x00000000                        . = 0x0
+ *(.init)
+ .init          0x00000000       0x10 /tmp/ccDrYEwg.o
+ *(.text)
+ .text          0x00000010        0x0 /tmp/ccDrYEwg.o
+ .text          0x00000010      0x214 /tmp/ccOsUTq0.o
+                0x00000010                read_int
+                0x00000018                write_int
+                0x00000020                mul_fp
+                0x00000044                div_fp
+                0x00000068                exp_fp
+                0x00000108                sqroot_fp
+                0x00000178                Bartlett_fp
+ *(*)
+ .data          0x00000224        0x0 /tmp/ccDrYEwg.o
+ .bss           0x00000224        0x0 /tmp/ccDrYEwg.o
+ .riscv.attributes
+                0x00000224       0x1a /tmp/ccDrYEwg.o
+ .data          0x0000023e        0x0 /tmp/ccOsUTq0.o
+ .bss           0x0000023e        0x0 /tmp/ccOsUTq0.o
+ *fill*         0x0000023e        0x2 
+ .text.startup  0x00000240       0x4c /tmp/ccOsUTq0.o
+                0x00000240                main
+ .comment       0x0000028c        0xf /tmp/ccOsUTq0.o
+                                 0x10 (size before relaxing)
+ .note.GNU-stack
+                0x0000029b        0x0 /tmp/ccOsUTq0.o
+ .riscv.attributes
+                0x0000029b       0x1c /tmp/ccOsUTq0.o
+                0x000002b8                        . = ALIGN (0x4)
+ *fill*         0x000002b7        0x1 
+                0x000002b8                        end = .
+LOAD /home/misha/riscv-gnu-toolchain/installed-tools/lib/gcc/riscv32-unknown-elf/15.1.0/libgcc.a
+OUTPUT(./firmware/firmware.elf elf32-littleriscv)
