@@ -57,10 +57,10 @@ module Pico_SoC (
   	
 	
 	picorv32_wb #(
-		.ENABLE_MUL(1),
-		.ENABLE_DIV(1),
-		.ENABLE_IRQ(1),
-		.ENABLE_TRACE(1)
+    	.ENABLE_MUL(1),
+    	.ENABLE_DIV(1),
+    	.ENABLE_IRQ(1),
+    	.ENABLE_TRACE(1)
 	) uut (
 		//.trap (trap),
 		.irq (irq),
