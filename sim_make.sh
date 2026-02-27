@@ -1,4 +1,4 @@
  #!/bin/bash
-iverilog -o qqq *.v -g2009
+iverilog -g2009 -o qqq *.v
 vvp qqq
 surfer system.vcd

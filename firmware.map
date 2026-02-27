@@ -8,41 +8,41 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-LOAD /tmp/ccDrYEwg.o
-LOAD /tmp/ccOsUTq0.o
+LOAD /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccziIhuw.o
+LOAD /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
 
-.memory         0x00000000      0x2b8
+.memory         0x00000000      0x218
                 0x00000000                        . = 0x0
  *(.init)
- .init          0x00000000       0x10 /tmp/ccDrYEwg.o
+ .init          0x00000000       0x10 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccziIhuw.o
  *(.text)
- .text          0x00000010        0x0 /tmp/ccDrYEwg.o
- .text          0x00000010      0x214 /tmp/ccOsUTq0.o
-                0x00000010                read_int
-                0x00000018                write_int
-                0x00000020                mul_fp
-                0x00000044                div_fp
-                0x00000068                exp_fp
-                0x00000108                sqroot_fp
-                0x00000178                Bartlett_fp
+ .text          0x00000010        0x0 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccziIhuw.o
+ .text          0x00000010      0x130 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+                0x00000010                memcpy
+                0x00000034                memset
+                0x00000050                write_gpio
+                0x0000005c                swap
+                0x00000070                partition
+                0x000000dc                quicksort
  *(*)
- .data          0x00000224        0x0 /tmp/ccDrYEwg.o
- .bss           0x00000224        0x0 /tmp/ccDrYEwg.o
+ .data          0x00000140        0x0 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccziIhuw.o
+ .bss           0x00000140        0x0 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccziIhuw.o
  .riscv.attributes
-                0x00000224       0x1a /tmp/ccDrYEwg.o
- .data          0x0000023e        0x0 /tmp/ccOsUTq0.o
- .bss           0x0000023e        0x0 /tmp/ccOsUTq0.o
- *fill*         0x0000023e        0x2 
- .text.startup  0x00000240       0x4c /tmp/ccOsUTq0.o
-                0x00000240                main
- .comment       0x0000028c        0xf /tmp/ccOsUTq0.o
-                                 0x10 (size before relaxing)
+                0x00000140       0x1a /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccziIhuw.o
+ .data          0x0000015a        0x0 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+ .bss           0x0000015a        0x0 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+ *fill*         0x0000015a        0x2 
+ .text.startup  0x0000015c       0x5c /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+                0x0000015c                main
+ .rodata        0x000001b8       0x28 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+ .comment       0x000001e0       0x19 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+                                 0x1a (size before relaxing)
  .note.GNU-stack
-                0x0000029b        0x0 /tmp/ccOsUTq0.o
+                0x000001f9        0x0 /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
  .riscv.attributes
-                0x0000029b       0x1c /tmp/ccOsUTq0.o
-                0x000002b8                        . = ALIGN (0x4)
- *fill*         0x000002b7        0x1 
-                0x000002b8                        end = .
-LOAD /home/misha/riscv-gnu-toolchain/installed-tools/lib/gcc/riscv32-unknown-elf/15.1.0/libgcc.a
+                0x000001f9       0x1c /var/folders/gm/sdqy_mrj5bd2v6hp221j6njm0000gn/T//ccglqnNR.o
+                0x00000218                        . = ALIGN (0x4)
+ *fill*         0x00000215        0x3 
+                0x00000218                        end = .
+LOAD /opt/homebrew/Cellar/riscv-gnu-toolchain/main/lib/gcc/riscv64-unknown-elf/15.1.0/rv32i/ilp32/libgcc.a
 OUTPUT(./firmware/firmware.elf elf32-littleriscv)
