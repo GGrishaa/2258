@@ -56,7 +56,7 @@ firmware.bin: firmware.elf
 	$(OBJCOPY) -O binary $< $@
 
 firmware.mem: firmware.bin
-	python3 ../../../firmware/makehex.py $< 4096 > $@
+	python3 ../../../firmware/makehex.py $< 8192 > $@
 
 clean:
 	rm -f $(OBJS) firmware.elf firmware.bin firmware.mem firmware.map

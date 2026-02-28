@@ -5,44 +5,52 @@
 #define GPIO_BASE       0x10010000
 #define GPIO_OUT        (*(volatile uint32_t *)GPIO_BASE)
 
-#define TASK1_PRIORITY  2
-#define TASK2_PRIORITY  1
-#define TASK1_PERIOD_MS 200
-#define TASK2_PERIOD_MS 500
-#define TASK1_BIT       0
-#define TASK2_BIT       1
-
-static void delay_ms(uint32_t ms)
-{
-    volatile uint32_t delay = configCPU_CLOCK_HZ / 1000 * ms;
-    while (delay--) { __asm volatile(""); }
-}
-
-static void vTask1(void *pvParameters)
+static void vTestTask(void *pvParameters)
 {
     (void)pvParameters;
     for (;;) {
-        GPIO_OUT ^= (1 << TASK1_BIT);
-        delay_ms(TASK1_PERIOD_MS);
-    }
-}
-
-static void vTask2(void *pvParameters)
-{
-    (void)pvParameters;
-    for (;;) {
-        GPIO_OUT ^= (1 << TASK2_BIT);
-        delay_ms(TASK2_PERIOD_MS);
+        GPIO_OUT = 0x0000AAAA;
     }
 }
 
 int main(void)
 {
-    xTaskCreate(vTask1, "Task1", configMINIMAL_STACK_SIZE, NULL, TASK1_PRIORITY, NULL);
-    xTaskCreate(vTask2, "Task2", configMINIMAL_STACK_SIZE, NULL, TASK2_PRIORITY, NULL);
-
+    TaskHandle_t xHandle = NULL;
+    
+    /* Маркер 1: вход в main */
+    GPIO_OUT = 0x00000001;
+    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    
+    /* Маркер 2: перед xTaskCreate */
+    GPIO_OUT = 0x00000010;
+    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    
+    /* Создаем задачу */
+    BaseType_t xReturn = xTaskCreate(
+        vTestTask,
+        "Test",
+        configMINIMAL_STACK_SIZE,
+        NULL,
+        1,
+        &xHandle
+    );
+    
+    /* Маркер 3: после xTaskCreate */
+    if (xReturn == pdPASS) {
+        GPIO_OUT = 0x00000020;
+    } else {
+        GPIO_OUT = 0x000000EE;
+    }
+    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    
+    /* Маркер 4: перед планировщиком */
+    GPIO_OUT = 0x00000030;
+    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    
     vTaskStartScheduler();
-
+    
+    /* Если вернется */
+    GPIO_OUT = 0x000000FF;
     for (;;);
     return 0;
 }

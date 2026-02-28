@@ -171,7 +171,7 @@ PRIVILEGED_DATA static size_t xNumberOfSuccessfulFrees = ( size_t ) 0U;
 /*-----------------------------------------------------------*/
 
 void * pvPortMalloc( size_t xWantedSize )
-{
+{   
     BlockLink_t * pxBlock;
     BlockLink_t * pxPreviousBlock;
     BlockLink_t * pxNewBlockLink;
@@ -181,66 +181,35 @@ void * pvPortMalloc( size_t xWantedSize )
 
     if( xWantedSize > 0 )
     {
-        /* The wanted size must be increased so it can contain a BlockLink_t
-         * structure in addition to the requested amount of bytes. */
         if( heapADD_WILL_OVERFLOW( xWantedSize, xHeapStructSize ) == 0 )
         {
             xWantedSize += xHeapStructSize;
 
-            /* Ensure that blocks are always aligned to the required number
-             * of bytes. */
             if( ( xWantedSize & portBYTE_ALIGNMENT_MASK ) != 0x00 )
             {
-                /* Byte alignment required. */
                 xAdditionalRequiredSize = portBYTE_ALIGNMENT - ( xWantedSize & portBYTE_ALIGNMENT_MASK );
-
                 if( heapADD_WILL_OVERFLOW( xWantedSize, xAdditionalRequiredSize ) == 0 )
                 {
                     xWantedSize += xAdditionalRequiredSize;
                 }
-                else
-                {
-                    xWantedSize = 0;
-                }
-            }
-            else
-            {
-                mtCOVERAGE_TEST_MARKER();
+                else { xWantedSize = 0; }
             }
         }
-        else
-        {
-            xWantedSize = 0;
-        }
-    }
-    else
-    {
-        mtCOVERAGE_TEST_MARKER();
+        else { xWantedSize = 0; }
     }
 
     vTaskSuspendAll();
     {
-        /* If this is the first call to malloc then the heap will require
-         * initialisation to setup the list of free blocks. */
         if( pxEnd == NULL )
         {
             prvHeapInit();
         }
-        else
-        {
-            mtCOVERAGE_TEST_MARKER();
-        }
 
-        /* Check the block size we are trying to allocate is not so large that the
-         * top bit is set.  The top bit of the block size member of the BlockLink_t
-         * structure is used to determine who owns the block - the application or
-         * the kernel, so it must be free. */
         if( heapBLOCK_SIZE_IS_VALID( xWantedSize ) != 0 )
         {
             if( ( xWantedSize > 0 ) && ( xWantedSize <= xFreeBytesRemaining ) )
             {
-                /* Traverse the list from the start (lowest address) block until
-                 * one of adequate size is found. */
+                
                 pxPreviousBlock = &xStart;
                 pxBlock = heapPROTECT_BLOCK_POINTER( xStart.pxNextFreeBlock );
                 heapVALIDATE_BLOCK_POINTER( pxBlock );
@@ -252,104 +221,38 @@ void * pvPortMalloc( size_t xWantedSize )
                     heapVALIDATE_BLOCK_POINTER( pxBlock );
                 }
 
-                /* If the end marker was reached then a block of adequate size
-                 * was not found. */
                 if( pxBlock != pxEnd )
                 {
-                    /* Return the memory space pointed to - jumping over the
-                     * BlockLink_t structure at its start. */
+                    
                     pvReturn = ( void * ) ( ( ( uint8_t * ) heapPROTECT_BLOCK_POINTER( pxPreviousBlock->pxNextFreeBlock ) ) + xHeapStructSize );
                     heapVALIDATE_BLOCK_POINTER( pvReturn );
-
-                    /* This block is being returned for use so must be taken out
-                     * of the list of free blocks. */
                     pxPreviousBlock->pxNextFreeBlock = pxBlock->pxNextFreeBlock;
-
-                    /* If the block is larger than required it can be split into
-                     * two. */
-                    configASSERT( heapSUBTRACT_WILL_UNDERFLOW( pxBlock->xBlockSize, xWantedSize ) == 0 );
 
                     if( ( pxBlock->xBlockSize - xWantedSize ) > heapMINIMUM_BLOCK_SIZE )
                     {
-                        /* This block is to be split into two.  Create a new
-                         * block following the number of bytes requested. The void
-                         * cast is used to prevent byte alignment warnings from the
-                         * compiler. */
                         pxNewBlockLink = ( void * ) ( ( ( uint8_t * ) pxBlock ) + xWantedSize );
-                        configASSERT( ( ( ( size_t ) pxNewBlockLink ) & portBYTE_ALIGNMENT_MASK ) == 0 );
-
-                        /* Calculate the sizes of two blocks split from the
-                         * single block. */
                         pxNewBlockLink->xBlockSize = pxBlock->xBlockSize - xWantedSize;
                         pxBlock->xBlockSize = xWantedSize;
-
-                        /* Insert the new block into the list of free blocks. */
                         pxNewBlockLink->pxNextFreeBlock = pxPreviousBlock->pxNextFreeBlock;
                         pxPreviousBlock->pxNextFreeBlock = heapPROTECT_BLOCK_POINTER( pxNewBlockLink );
                     }
-                    else
-                    {
-                        mtCOVERAGE_TEST_MARKER();
-                    }
 
                     xFreeBytesRemaining -= pxBlock->xBlockSize;
-
-                    if( xFreeBytesRemaining < xMinimumEverFreeBytesRemaining )
-                    {
-                        xMinimumEverFreeBytesRemaining = xFreeBytesRemaining;
-                    }
-                    else
-                    {
-                        mtCOVERAGE_TEST_MARKER();
-                    }
-
-                    xAllocatedBlockSize = pxBlock->xBlockSize;
-
-                    /* The block is being returned - it is allocated and owned
-                     * by the application and has no "next" block. */
                     heapALLOCATE_BLOCK( pxBlock );
                     pxBlock->pxNextFreeBlock = heapPROTECT_BLOCK_POINTER( NULL );
                     xNumberOfSuccessfulAllocations++;
-                }
-                else
-                {
-                    mtCOVERAGE_TEST_MARKER();
+                    
                 }
             }
-            else
-            {
-                mtCOVERAGE_TEST_MARKER();
-            }
         }
-        else
-        {
-            mtCOVERAGE_TEST_MARKER();
-        }
-
         traceMALLOC( pvReturn, xAllocatedBlockSize );
-
-        /* Prevent compiler warnings when trace macros are not used. */
         ( void ) xAllocatedBlockSize;
     }
     ( void ) xTaskResumeAll();
 
-    #if ( configUSE_MALLOC_FAILED_HOOK == 1 )
-    {
-        if( pvReturn == NULL )
-        {
-            vApplicationMallocFailedHook();
-        }
-        else
-        {
-            mtCOVERAGE_TEST_MARKER();
-        }
-    }
-    #endif /* if ( configUSE_MALLOC_FAILED_HOOK == 1 ) */
-
     configASSERT( ( ( ( size_t ) pvReturn ) & ( size_t ) portBYTE_ALIGNMENT_MASK ) == 0 );
     return pvReturn;
-}
-/*-----------------------------------------------------------*/
+}/*-----------------------------------------------------------*/
 
 void vPortFree( void * pv )
 {

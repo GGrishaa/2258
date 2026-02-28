@@ -11,7 +11,7 @@
 /*-----------------------------------------------------------*/
 
 /* Критическая секция */
-size_t xCriticalNesting = 0xaaaaaaaa;
+size_t xCriticalNesting = 0;
 size_t *pxCriticalNesting = &xCriticalNesting;
 
 /*-----------------------------------------------------------*/
@@ -77,14 +77,30 @@ void vPortSetupTimerInterrupt(void)
 /* Запуск первой задачи */
 void vPortStartFirstTask(void)
 {
-    /* === ОТЛАДКА: перед mret === */
-    #define GPIO_OUT (*(volatile uint32_t *)0x10010000)
-    GPIO_OUT = 0x00000800;  /* Bit 11 */
-    for (volatile int i = 0; i < 50; i++) { __asm volatile("nop"); }
-    /* ============================ */
-
-    __asm volatile("csrs mstatus, %0" :: "r"(0x00000008));
-    __asm volatile("mret");
+    uint32_t ulCurrentTCB;
+    uint32_t ulTopOfStack;
+    uint32_t ulEntryPoint;
+    
+    /* Получаем адрес текущего TCB */
+    __asm volatile ( "lw %0, pxCurrentTCB" : "=r" (ulCurrentTCB) );
+    
+    /* Первый элемент TCB - это pxTopOfStack */
+    __asm volatile ( "lw %0, 0(%1)" : "=r" (ulTopOfStack) : "r" (ulCurrentTCB) );
+    
+    /* Читаем entry point из стека (смещение 31 * 4 байта) */
+    __asm volatile ( "lw %0, 124(%1)" : "=r" (ulEntryPoint) : "r" (ulTopOfStack) );
+    
+    /* Записываем в mepc */
+    __asm volatile ( "csrw mepc, %0" :: "r" (ulEntryPoint) );
+    
+    /* Включаем MIE в mstatus */
+    __asm volatile ( "csrs mstatus, %0" :: "r" (0x00000008) );
+    
+    /* Возврат в задачу */
+    __asm volatile ( "mret" );
+    
+    /* Недостижимый код */
+    for (;;);
 }
 
 /*-----------------------------------------------------------*/
@@ -92,23 +108,10 @@ void vPortStartFirstTask(void)
 /* Запуск планировщика */
 BaseType_t xPortStartScheduler(void)
 {
-    #define GPIO_OUT (*(volatile uint32_t *)0x10010000)
-    
-    /* Маркер: вход в xPortStartScheduler */
-    GPIO_OUT = 0x00000600;  /* Bit 10+9 */
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
 
     vPortSetupTimerInterrupt();
-    
-    /* Маркер: перед vPortStartFirstTask */
-    GPIO_OUT = 0x00000700;  /* Bit 10+9+8 */
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
 
-    vPortStartFirstTask();  /* ← здесь вызывается mret */
-    
-    /* Если вернётся — ошибка */
-    GPIO_OUT = 0x00000EEE;  /* ОШИБКА: mret вернулся */
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    vPortStartFirstTask();
     
     return pdFAIL;
 }

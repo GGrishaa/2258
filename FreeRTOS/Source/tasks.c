@@ -1703,7 +1703,6 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
                 if( pxNewTCB != NULL )
                 {
                     ( void ) memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
-
                     /* Store the stack location in the TCB. */
                     pxNewTCB->pxStack = pxStack;
                 }
@@ -1733,7 +1732,6 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
 
             prvInitialiseNewTask( pxTaskCode, pcName, uxStackDepth, pvParameters, uxPriority, pxCreatedTask, pxNewTCB, NULL );
         }
-
         return pxNewTCB;
     }
 /*-----------------------------------------------------------*/
@@ -4038,14 +4036,11 @@ BaseType_t xTaskResumeAll( void )
         taskENTER_CRITICAL();
         {
             const BaseType_t xCoreID = ( BaseType_t ) portGET_CORE_ID();
-
             /* If uxSchedulerSuspended is zero then this function does not match a
              * previous call to vTaskSuspendAll(). */
             configASSERT( uxSchedulerSuspended != 0U );
-
             uxSchedulerSuspended = ( UBaseType_t ) ( uxSchedulerSuspended - 1U );
             portRELEASE_TASK_LOCK( xCoreID );
-
             if( uxSchedulerSuspended == ( UBaseType_t ) 0U )
             {
                 if( uxCurrentNumberOfTasks > ( UBaseType_t ) 0U )
@@ -4062,7 +4057,6 @@ BaseType_t xTaskResumeAll( void )
                         portMEMORY_BARRIER();
                         listREMOVE_ITEM( &( pxTCB->xStateListItem ) );
                         prvAddTaskToReadyList( pxTCB );
-
                         #if ( configNUMBER_OF_CORES == 1 )
                         {
                             /* If the moved task has a priority higher than the current
@@ -4107,7 +4101,6 @@ BaseType_t xTaskResumeAll( void )
                      * from any core causes xTaskIncrementTick to increment uxPendedCounts. */
                     {
                         TickType_t xPendedCounts = xPendedTicks; /* Non-volatile copy. */
-
                         if( xPendedCounts > ( TickType_t ) 0U )
                         {
                             do
@@ -4133,7 +4126,6 @@ BaseType_t xTaskResumeAll( void )
                             mtCOVERAGE_TEST_MARKER();
                         }
                     }
-
                     if( xYieldPendings[ xCoreID ] != pdFALSE )
                     {
                         #if ( configUSE_PREEMPTION != 0 )

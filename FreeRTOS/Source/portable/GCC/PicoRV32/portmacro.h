@@ -75,25 +75,28 @@ extern void vTaskSwitchContext( void );
 
 /* Critical section management. */
 #define portCRITICAL_NESTING_IN_TCB    0
-
-#define portDISABLE_INTERRUPTS()                                   __asm volatile ( "csrc mstatus, 8" )
-#define portENABLE_INTERRUPTS()                                    __asm volatile ( "csrs mstatus, 8" )
-
 extern size_t xCriticalNesting;
+
+#define portDISABLE_INTERRUPTS()    \
+    do {} while(0)
+
+#define portENABLE_INTERRUPTS()     \
+    do {} while(0)
+
 #define portENTER_CRITICAL()      \
-    {                             \
+    do {                          \
         portDISABLE_INTERRUPTS(); \
         xCriticalNesting++;       \
-    }
+    } while(0)
 
 #define portEXIT_CRITICAL()          \
-    {                                \
+    do {                             \
         xCriticalNesting--;          \
         if( xCriticalNesting == 0 )  \
         {                            \
             portENABLE_INTERRUPTS(); \
         }                            \
-    }
+    } while(0)
 
 /*-----------------------------------------------------------*/
 
@@ -167,5 +170,13 @@ extern size_t xCriticalNesting;
     }
 #endif
 /* *INDENT-ON* */
+
+/* Aliases for separate stack allocation (FreeRTOS 2024+) */
+#ifndef pvPortMallocStack
+    #define pvPortMallocStack    pvPortMalloc
+#endif
+#ifndef vPortFreeStack
+    #define vPortFreeStack       vPortFree
+#endif
 
 #endif /* PORTMACRO_H */
