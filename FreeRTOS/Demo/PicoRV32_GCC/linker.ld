@@ -7,12 +7,19 @@ ENTRY(_start)
 
 SECTIONS
 {
-    .text.reset : {
+    /* Вектор сброса - начинается с 0x00000000 */
+    .text.reset 0x00000000 : {
         *(.text.reset)
-        *(.text.startup)
     } > RAM
 
+    /* Вектор прерываний - СТРОГО по адресу 0x00000010 */
+    .text.irq 0x00000010 : {
+        *(.text.freertos_risc_v_trap_handler)
+    } > RAM
+
+    /* Основной код начинается после векторов */
     .text : {
+        *(.text.init)
         *(.text .text.*)
         *(.rodata .rodata.*)
     } > RAM
@@ -25,12 +32,9 @@ SECTIONS
         *(.bss .bss.*)
         *(COMMON)
         . = ALIGN(16);
-        _heap_end = .;  /* Конец BSS = начало кучи */
+        _heap_end = .;
     } > RAM
 
-    /* Явно вычисляем вершину стека: 0x00000000 + 32KB = 0x00008000 */
     _stack_top = 0x00008000;
-    
-    /* Символ для проверки в ассемблере */
     PROVIDE(_stack_top_addr = _stack_top);
 }

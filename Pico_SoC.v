@@ -1,12 +1,11 @@
 `timescale 1 ns / 1 ps
 
 module Pico_SoC (
-	input clk,f_clk,
-	input rst,
-	output [31:0] gpio, gpio1
+    input clk,f_clk,
+    input rst,
+    input [31:0] irq,
+    output [31:0] gpio, gpio1
 );
-
-	reg [31:0] irq = 0;
 
 	reg [15:0] count_cycle = 0;
 	always @(posedge clk) count_cycle <= !rst ? count_cycle + 1 : 0;

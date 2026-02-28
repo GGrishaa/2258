@@ -1,64 +1,69 @@
 `timescale 1 ns / 1 ps
 
 module system_tb;
-	integer fd;
+    integer fd;
 
-	reg clk = 1;
-	reg f_clk = 1;
-	always #5 clk = ~clk;
-	always #2.5 f_clk = ~f_clk;
+    // === Clocks ===
+    reg clk = 1;
+    reg f_clk = 1;
+    always #5 clk = ~clk;
+    always #2.5 f_clk = ~f_clk;
 
-	reg resetn = 1;
-	initial begin
-		
-		repeat (10) @(posedge clk);
-		resetn <= 0;
+    // === Reset ===
+    reg resetn = 1;
+    initial begin
+        repeat (10) @(posedge clk);
+        resetn <= 0;
+    end
+
+    // === VCD Dump ===
+    initial begin
+        $dumpfile("system.vcd");
+        $dumpvars(0, system_tb);
+    end
+
+    // === GPIO wires ===
+    wire [31:0] gpio, gpio1;
+
+	// === Простой и надёжный генератор IRQ ===
+	// === Простой и надёжный генератор IRQ ===
+	reg [15:0] irq_counter;
+	reg [31:0] irq;
+	localparam PERIOD = 16'd1000;      // Период повторения импульсов (в тактах clk)
+	localparam PULSE_WIDTH = 16'd20;   // Длительность высокого уровня
+
+	always @(posedge clk) begin
+    	if (!resetn) begin             // ✅ Активный низкий сброс
+        	irq_counter <= 16'd0;
+        	irq <= 32'd0;
+    	end else begin
+        	if (irq_counter == PERIOD - 1)
+            	irq_counter <= 16'd0;
+        	else
+            	irq_counter <= irq_counter + 1'd1;
+        		
+			if (irq_counter < PULSE_WIDTH)
+           		irq <= 32'd1;
+        	else
+            	irq <= 32'd0;
+    	end
 	end
-	
-	initial begin
-			//fd = $fopen("stfft.txt", "w");
-			
-			$dumpfile("system.vcd");
-			//$dumpvars(0, system_tb.uut.gpio);
-			$dumpvars(0, system_tb); //full_test
-		end
+// =========================================
 
+    // === Инстансация Pico_SoC ===
+    Pico_SoC uut (
+        .clk    (clk),
+        .f_clk  (f_clk),
+        .rst    (resetn),
+        .irq    (irq),
+        .gpio   (gpio),
+        .gpio1  (gpio1)
+    );
 
-    wire [31:0] gpio,gpio1;
-
-
-
-	Pico_SoC uut (
-		.clk	(clk),
-		.f_clk	(f_clk),
-		.rst	(resetn),
-		.gpio	(gpio),
-		.gpio1	(gpio1)
-	);
-	
-	
-	//file in write
-	/*
-	parameter IP_CORE_ADDR = 32'h1003_0000;
-	always@(posedge clk)
-	begin
-		if(system_tb.uut.fft.ack_o==1)
-		begin
-			if((system_tb.uut.fft.adr_i >= (IP_CORE_ADDR+32'h1000)) && (system_tb.uut.fft.adr_i < (IP_CORE_ADDR+32'h2000))) 
-		    		$fdisplay(fd,"%d %d",system_tb.uut.fft.adr_i[11:0]>>2,system_tb.uut.fft.fft_out_buf_r[system_tb.uut.fft.adr_i[11:0]>>2]);
-		    	else if((system_tb.uut.fft.adr_i >= (IP_CORE_ADDR+32'h2000)) && (system_tb.uut.fft.adr_i < (IP_CORE_ADDR+32'h3000))) 
-		    		$fdisplay(fd,"%d %d",system_tb.uut.fft.adr_i[11:0]>>2,system_tb.uut.fft.fft_out_buf_i[system_tb.uut.fft.adr_i[11:0]>>2]);
-		end
-	end
-	*/
-	
-
-	initial 
-	begin
-	#1_000_000 
-	//#5_000_000_000//full_test
-	//$fclose(fd);
-	$finish;
-	end
+    // === Завершение симуляции ===
+    initial begin
+        #1_000_000;
+        $finish;
+    end
 
 endmodule

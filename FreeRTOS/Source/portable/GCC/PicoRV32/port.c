@@ -62,15 +62,21 @@ void vPortTickHandler(void)
 
 void vPortSetupTimerInterrupt(void)
 {
-    __asm volatile("csrw 0x305, %0" :: "r"(&freertos_risc_v_trap_handler));
+    #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
+    GPIO_OUT = 0x00000100;
     
-    __asm volatile("csrw 0xcc1, %0" :: "r"(0x00000001));
+    GPIO_OUT = 0x00000200;  
     
-    uint32_t timer_period = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
-    __asm volatile("csrw 0xcc0, %0" :: "r"(timer_period));
+    /* Отключаем несуществующие CSR таймера */
+    /* __asm volatile("csrw 0xcc1, %0" :: "r"(0x00000001)); */
+    /* __asm volatile("csrw 0xcc0, %0" :: "r"(timer_period)); */
     
-    __asm volatile("csrs mstatus, %0" :: "r"(0x00000008));
-    __asm volatile("csrs mie, %0" :: "r"(0x00000001));
+    /* Включаем прерывания через PicoRV32 custom инструкцию maskirq */
+    /* Encoding: funct7=0b0000011, rs1=x0 (маска 0), funct3=0, rd=0, opcode=0x13 */
+    /* Это разрешает прерывания с маской 0 (все разрешены) */
+    __asm volatile(".word 0x06000013");  /* maskirq x0 */
+    
+    GPIO_OUT = 0x00000300;
 }
 
 
@@ -110,9 +116,10 @@ BaseType_t xPortStartScheduler(void)
 {
 
     vPortSetupTimerInterrupt();
-
+    #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
+    GPIO_OUT = 0x00000444;
     vPortStartFirstTask();
-    
+    GPIO_OUT = 0x00000555;
     return pdFAIL;
 }
 
