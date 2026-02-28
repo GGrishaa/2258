@@ -1,3 +1,24 @@
+/* ============================================================ */
+/* RESET VECTOR - ДОЛЖЕН БЫТЬ ПЕРВЫМ В .text СЕКЦИИ */
+/* ============================================================ */
+.section .text.reset
+.align 2
+.global _start
+
+_start:
+    /* Инициализация стека: используем _stack_top из linker.ld */
+    lui sp, %hi(0x00008000)
+    addi sp, sp, %lo(0x00008000)
+    
+    /* Опционально: инициализация gp, tp если нужно */
+    /* la gp, __global_pointer$ */
+    
+    /* Вызов main */
+    call main
+    
+    /* Если main вернётся — зацикливаемся */
+1:  j 1b
+
 #include "portContext.h"
 #include "freertos_risc_v_chip_specific_extensions.h"
 
@@ -38,10 +59,11 @@ xTaskReturnAddress: .word 0
 
 .section .text
 
-/*-----------------------------------------------------------*/
-/* Инициализация стека задачи */
 .global pxPortInitialiseStack
 pxPortInitialiseStack:
+    li t0, 0x10010000
+    li t1, 0x0000000C
+    sw t1, 0(t0)
     addi a0, a0, -portWORD_SIZE
     store_x x0, 0(a0)                   /* critical nesting = 0 */
 

@@ -60,6 +60,7 @@ module Pico_SoC (
     	.ENABLE_MUL(1),
     	.ENABLE_DIV(1),
     	.ENABLE_IRQ(1),
+    	.ENABLE_IRQ_TIMER(1),
     	.ENABLE_TRACE(1)
 	) uut (
 		//.trap (trap),

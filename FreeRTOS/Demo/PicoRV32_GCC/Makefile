@@ -26,6 +26,7 @@ APP_C = main.c
 OBJS = tasks.o list.o queue.o heap_4.o port.o portASM.o main.o
 
 all: firmware.mem
+	cp firmware.mem ../../../
 
 firmware.elf: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lgcc
