@@ -26,26 +26,20 @@ module system_tb;
     wire [31:0] gpio, gpio1;
 
 	// === Простой и надёжный генератор IRQ ===
-	// === Простой и надёжный генератор IRQ ===
 	reg [15:0] irq_counter;
 	reg [31:0] irq;
-	localparam PERIOD = 16'd1000;      // Период повторения импульсов (в тактах clk)
-	localparam PULSE_WIDTH = 16'd20;   // Длительность высокого уровня
 
 	always @(posedge clk) begin
-    	if (!resetn) begin             // ✅ Активный низкий сброс
+    	if (resetn) begin
         	irq_counter <= 16'd0;
         	irq <= 32'd0;
     	end else begin
-        	if (irq_counter == PERIOD - 1)
-            	irq_counter <= 16'd0;
-        	else
-            	irq_counter <= irq_counter + 1'd1;
-        		
-			if (irq_counter < PULSE_WIDTH)
-           		irq <= 32'd1;
-        	else
-            	irq <= 32'd0;
+        	irq_counter <= irq_counter + 1'd1;
+        	if (irq_counter >= 16'd9980 && irq_counter < 16'd10000) begin
+            	irq <= 32'd1;  // Импульс 20 тактов
+        	end else begin
+        		irq <= 32'd0;
+        	end
     	end
 	end
 // =========================================
