@@ -14,6 +14,7 @@
 #define configMAX_TASK_NAME_LEN           16
 #define configUSE_16_BIT_TICKS            0
 #define configIDLE_SHOULD_YIELD           1
+#define configUSE_TIME_SLICING            1
 
 #define configUSE_MUTEXES                 0
 #define configUSE_RECURSIVE_MUTEXES       0
@@ -22,6 +23,7 @@
 
 #define configSUPPORT_STATIC_ALLOCATION   0
 #define configSUPPORT_DYNAMIC_ALLOCATION  1
+//#define configNUMBER_OF_CORES             1
 #define configCHECK_FOR_STACK_OVERFLOW    0
 #define configUSE_TRACE_FACILITY          0
 #define configGENERATE_RUN_TIME_STATS     0
@@ -33,5 +35,6 @@
 #define configTIMER_TASK_PRIORITY         0
 #define configTIMER_QUEUE_LENGTH          0
 #define configTIMER_TASK_STACK_DEPTH      0
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION    0
 
 #endif /* FREERTOS_CONFIG_H */

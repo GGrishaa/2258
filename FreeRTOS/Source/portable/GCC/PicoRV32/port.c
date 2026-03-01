@@ -54,7 +54,7 @@ void vPortTickHandler(void)
     GPIO_OUT = 0x00000500;
     
     /* ПЕРЕЗАГРУЗКА таймера (не авто-перезагружается!) */
-    const uint32_t timer_period = (configCPU_CLOCK_HZ / 1000);
+    const uint32_t timer_period = (configCPU_CLOCK_HZ / configTICK_RATE_HZ);
     /* Инструкция: timer x0, t0 */
     /* Encoding: funct7=0x05, rs1=t0(5), rd=x0(0), opcode=0x0B */
     __asm volatile(
@@ -93,7 +93,7 @@ void vPortSetupTimerInterrupt(void)
     GPIO_OUT = 0x00000100;
     
     /* Рассчитываем период таймера: CPU_CLK / TICK_RATE */
-    const uint32_t timer_period = (configCPU_CLOCK_HZ / 1000);
+    const uint32_t timer_period = (configCPU_CLOCK_HZ / configTICK_RATE_HZ);
     /* Для 10 MHz / 100 Hz = 100000 тактов */
     
     /* Загружаем период через кастомную инструкцию timer */
@@ -109,8 +109,8 @@ void vPortSetupTimerInterrupt(void)
     GPIO_OUT = 0x00000101;
     
     /* Разрешаем глобальные прерывания через кастомную инструкцию maskirq */
-    /* Encoding: 0x06000013 = maskirq x0 (разрешить все IRQ) */
-    //__asm volatile(".word 0x0600000B");
+    /* Encoding: 0x0600000B = maskirq x0 (разрешить все IRQ) */
+    __asm volatile(".word 0x0600000B");
     
     GPIO_OUT = 0x00000300;
 }

@@ -5111,19 +5111,24 @@ BaseType_t xTaskIncrementTick( void )
 #if ( configNUMBER_OF_CORES == 1 )
     void vTaskSwitchContext( void )
     {
+        #define GPIO_OUT (*(volatile uint32_t *)0x10010000)
+        GPIO_OUT = 0x00009000;
         traceENTER_vTaskSwitchContext();
 
         if( uxSchedulerSuspended != ( UBaseType_t ) 0U )
         {
             /* The scheduler is currently suspended - do not allow a context
              * switch. */
+            GPIO_OUT = 0x00009005;
             xYieldPendings[ 0 ] = pdTRUE;
         }
         else
         {
+            GPIO_OUT = 0x00009006;
             xYieldPendings[ 0 ] = pdFALSE;
+            GPIO_OUT = 0x00009010;
             traceTASK_SWITCHED_OUT();
-
+            GPIO_OUT = 0x00009011;
             #if ( configGENERATE_RUN_TIME_STATS == 1 )
             {
                 #ifdef portALT_GET_RUN_TIME_COUNTER_VALUE
@@ -5153,22 +5158,27 @@ BaseType_t xTaskIncrementTick( void )
             #endif /* configGENERATE_RUN_TIME_STATS */
 
             /* Check for stack overflow, if configured. */
+            GPIO_OUT = 0x00009012;
             taskCHECK_FOR_STACK_OVERFLOW();
-
+            GPIO_OUT = 0x00009013;
             /* Before the currently running task is switched out, save its errno. */
             #if ( configUSE_POSIX_ERRNO == 1 )
             {
                 pxCurrentTCB->iTaskErrno = FreeRTOS_errno;
             }
             #endif
-
+            GPIO_OUT = 0x00009014;
             /* Select a new task to run using either the generic C or port
              * optimised asm code. */
             /* MISRA Ref 11.5.3 [Void pointer assignment] */
             /* More details at: https://github.com/FreeRTOS/FreeRTOS-Kernel/blob/main/MISRA.md#rule-115 */
             /* coverity[misra_c_2012_rule_11_5_violation] */
             taskSELECT_HIGHEST_PRIORITY_TASK();
+            GPIO_OUT = 0x00009015;
             traceTASK_SWITCHED_IN();
+            GPIO_OUT = 0x00009007;
+            GPIO_OUT = (uint32_t)pxCurrentTCB;  /* Адрес TCB */
+            GPIO_OUT = *(uint32_t *)pxCurrentTCB;
 
             /* Macro to inject port specific behaviour immediately after
              * switching tasks, such as setting an end of stack watchpoint
@@ -5190,7 +5200,7 @@ BaseType_t xTaskIncrementTick( void )
             }
             #endif
         }
-
+        GPIO_OUT = 0x00009008;
         traceRETURN_vTaskSwitchContext();
     }
 #else /* if ( configNUMBER_OF_CORES == 1 ) */

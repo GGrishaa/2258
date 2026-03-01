@@ -10,15 +10,15 @@ static void vTestTask(void *pvParameters)
 {
     (void)pvParameters;
     
-    GPIO_OUT = 0x0000BBBB;
+    GPIO_OUT = 0xBBBB0000;
     __asm volatile(".word 0x0600000B");
     for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
     
     for (;;) {
-        GPIO_OUT = 0x0000AAAA;
+        GPIO_OUT = 0xAAAA0000;
         for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
         
-        GPIO_OUT = 0x0000DDDD;  /* Новый маркер после yield */
+        GPIO_OUT = 0xDDDD0000;  /* Новый маркер после yield */
         for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
     }
 }
@@ -29,6 +29,7 @@ static void vTestTask2(void *pvParameters)
 
     GPIO_OUT = 0x0000CCCC;
     __asm volatile(".word 0x0600000B");
+    //for (volatile int i = 0; i < 1000000; i++) { __asm volatile("nop"); }
     
     for (;;) {
         GPIO_OUT = 0x0000EEEE;  /* Вторая задача работает! */
