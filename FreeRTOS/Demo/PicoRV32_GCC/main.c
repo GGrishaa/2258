@@ -10,13 +10,17 @@ static void vTestTask(void *pvParameters)
 {
     (void)pvParameters;
     
-    /* === 0xBBBB: Вход в задачу === */
     GPIO_OUT = 0x0000BBBB;
+    for (volatile int i = 0; i < 1000; i++) { __asm volatile("nop"); }
     
     for (;;) {
         GPIO_OUT = 0x0000AAAA;
+        for (volatile int i = 0; i < 100000; i++) { __asm volatile("nop"); }
         
-        /* Задержка */
+        /* Явная уступка планировщику */
+        taskYIELD();
+        
+        GPIO_OUT = 0x0000DDDD;  /* Новый маркер после yield */
         for (volatile int i = 0; i < 100000; i++) { __asm volatile("nop"); }
     }
 }

@@ -56,7 +56,7 @@ module system_tb;
 
     // === Завершение симуляции ===
     initial begin
-        #50_000_000;
+        #100_000_000;
         $finish;
     end
 
