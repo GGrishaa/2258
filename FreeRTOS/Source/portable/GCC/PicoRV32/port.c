@@ -54,7 +54,7 @@ void vPortTickHandler(void)
     GPIO_OUT = 0x00000500;
     
     /* ПЕРЕЗАГРУЗКА таймера (не авто-перезагружается!) */
-    const uint32_t timer_period = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
+    const uint32_t timer_period = (configCPU_CLOCK_HZ / 1000);
     /* Инструкция: timer x0, t0 */
     /* Encoding: funct7=0x05, rs1=t0(5), rd=x0(0), opcode=0x0B */
     __asm volatile(
@@ -75,7 +75,11 @@ void vPortTickHandler(void)
     /* Переключение задачи если нужно */
     if( xSwitchRequired != pdFALSE )
     {
+        GPIO_OUT = 0x00000502A;
         portYIELD_FROM_ISR( xSwitchRequired );
+        GPIO_OUT = 0x00000502B;
+    } else {
+        GPIO_OUT = 0x00000502C;
     }
     
     GPIO_OUT = 0x00000503;
@@ -89,7 +93,7 @@ void vPortSetupTimerInterrupt(void)
     GPIO_OUT = 0x00000100;
     
     /* Рассчитываем период таймера: CPU_CLK / TICK_RATE */
-    const uint32_t timer_period = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
+    const uint32_t timer_period = (configCPU_CLOCK_HZ / 1000);
     /* Для 10 MHz / 100 Hz = 100000 тактов */
     
     /* Загружаем период через кастомную инструкцию timer */
@@ -106,54 +110,28 @@ void vPortSetupTimerInterrupt(void)
     
     /* Разрешаем глобальные прерывания через кастомную инструкцию maskirq */
     /* Encoding: 0x06000013 = maskirq x0 (разрешить все IRQ) */
-    __asm volatile(".word 0x06000013");
+    //__asm volatile(".word 0x0600000B");
     
     GPIO_OUT = 0x00000300;
 }
-#if 0
-void vPortStartFirstTask(void)
-{
-    #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
-    GPIO_OUT = 0x00000666;
-    uint32_t ulCurrentTCB;
-    uint32_t ulTopOfStack;
-    uint32_t ulEntryPoint;
-    
-    /* Получаем адрес текущего TCB */
-    __asm volatile ( "lw %0, pxCurrentTCB" : "=r" (ulCurrentTCB) );
-
-    /* Первый элемент TCB - это pxTopOfStack */
-    __asm volatile ( "lw %0, 0(%1)" : "=r" (ulTopOfStack) : "r" (ulCurrentTCB) );
-
-    /* Читаем entry point из стека (смещение 31 * 4 байта) */
-    __asm volatile ( "lw %0, 124(%1)" : "=r" (ulEntryPoint) : "r" (ulTopOfStack) );
-
-    /* Записываем в mepc */
-    __asm volatile ( "csrw mepc, %0" :: "r" (ulEntryPoint) );
-    GPIO_OUT = 0x00000AAA;
-    /* Включаем MIE в mstatus */
-    __asm volatile ( "csrs mstatus, %0" :: "r" (0x00000008) );
-    GPIO_OUT = 0x00000BBB;
-    /* Возврат в задачу */
-    __asm volatile ( "mret" );
-    GPIO_OUT = 0x00000CCC;
-    /* Недостижимый код */
-    for (;;);
-    GPIO_OUT = 0x00000DDD;
-}
-#endif
 
 /*-----------------------------------------------------------*/
 
 /* Запуск планировщика */
 BaseType_t xPortStartScheduler(void)
 {
-
+    GPIO_OUT = 0x00000440;  /* <-- Вход в xPortStartScheduler */
+    
     vPortSetupTimerInterrupt();
-    #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
-    GPIO_OUT = 0x00000444;
+    
+    GPIO_OUT = 0x00000441;  /* <-- После настройки таймера */
+    
+    /* ЗАПУСКАЕМ ПЕРВУЮ ЗАДАЧУ */
+    GPIO_OUT = 0x00000442;  /* <-- Перед xPortStartFirstTask */
     xPortStartFirstTask();
-    GPIO_OUT = 0x00000555;
+    
+    /* Сюда никогда не дойдём */
+    GPIO_OUT = 0x00000443;  /* <-- После xPortStartFirstTask (ошибка!) */
     return pdFAIL;
 }
 

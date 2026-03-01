@@ -51,12 +51,95 @@ freertos_risc_v_trap_handler:
     lw t6, 28(sp)
     addi sp, sp, 32
     
-    /* === 0x430: Возврат через retirq === */
+    /* === 0x430: Перед переключением контекста === */
     li t1, 0x10010000
     li t0, 0x00000430
     sw t0, 0(t1)
+
+    la t0, pxCurrentTCB
+    lw t0, 0(t0)
+    li t1, 0x10010000
+    sw t0, 0(t1)  
     
-    .word 0x04008013       /* retirq ra */
+    /* Вызываем переключатель контекста */
+    call vTaskSwitchContext
+    
+    /* === 0x431: После переключения контекста === */
+    li t1, 0x10010000
+    li t0, 0x00000431
+    sw t0, 0(t1)
+
+    la t0, pxCurrentTCB
+    lw t0, 0(t0)
+    li t1, 0x10010000
+    sw t0, 0(t1)
+
+    la t0, pxCurrentTCB
+    lw t0, 0(t0)           /* t0 = pxCurrentTCB */
+
+    li t1, 0x10010000
+    sw t0, 0(t1)           /* <-- Покажи адрес TCB */
+    
+    lw sp, 0(t0)           /* sp = pxTopOfStack */
+
+    li t1, 0x10010000
+    li t0, 0x00000433
+    sw t0, 0(t1)
+    
+    /* Восстанавливаем регистры */
+    lw ra,   0*4(sp)
+    lw gp,   1*4(sp)
+    lw tp,   2*4(sp)
+    lw t0,   3*4(sp)
+    lw t1,   4*4(sp)
+    lw t2,   5*4(sp)
+    lw a0,   6*4(sp)
+    lw a1,   7*4(sp)
+    lw a2,   8*4(sp)
+    lw a3,   9*4(sp)
+    lw a4,  10*4(sp)
+    lw a5,  11*4(sp)
+    lw a6,  12*4(sp)
+    lw a7,  13*4(sp)
+    lw s0,  14*4(sp)
+    lw s1,  15*4(sp)
+    lw s2,  16*4(sp)
+    lw s3,  17*4(sp)
+    lw s4,  18*4(sp)
+    lw s5,  19*4(sp)
+    lw s6,  20*4(sp)
+    lw s7,  21*4(sp)
+    lw s8,  22*4(sp)
+    lw s9,  23*4(sp)
+    lw s10, 24*4(sp)
+    lw s11, 25*4(sp)
+    lw t3,  26*4(sp)
+    lw t4,  27*4(sp)
+    lw t5,  28*4(sp)
+    lw t6,  29*4(sp)
+    
+    li t1, 0x10010000
+    li t0, 0x00000434
+    sw t0, 0(t1)
+
+    li t1, 0x10010000
+    sw ra, 0(t1)
+    
+    li t1, 0x10010000
+    sw sp, 0(t1)
+    
+    la t0, pxCurrentTCB
+    lw t0, 0(t0)
+    li t1, 0x10010000
+    sw t0, 0(t1)
+
+    /* Возврат в задачу */
+    jalr x0, ra, 0
+
+    li t1, 0x10010000
+    li t0, 0x00000435
+    sw t0, 0(t1)
+1:  j 1b
 
 .section .text.init
 _init_stack:
@@ -201,18 +284,13 @@ xPortStartFirstTask:
     lw t5,  28*4(sp)      /* x8/t5 */
     lw t6,  29*4(sp)      /* x9/t6 */
     
-    /* Критическое вложение уже загружено, но не используем сейчас */
-    
-    /* === 0x888: Перед прыжком === */
     li t1, 0x10010000
-    li t0, 0x00000888
+    li t0, 0x00000669
     sw t0, 0(t1)
     
-    /* Показываем адрес перехода для отладки */
     li t1, 0x10010000
     sw ra, 0(t1)
-    
-    /* Прыжок в задачу */
+
     jalr x0, ra, 0
     
     /* === 0x999: Если вернулись (ошибка!) === */
@@ -220,3 +298,4 @@ xPortStartFirstTask:
     li t0, 0x00000999
     sw t0, 0(t1)
 1:  j 1b
+

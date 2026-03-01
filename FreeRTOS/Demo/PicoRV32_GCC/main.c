@@ -11,69 +11,53 @@ static void vTestTask(void *pvParameters)
     (void)pvParameters;
     
     GPIO_OUT = 0x0000BBBB;
-    for (volatile int i = 0; i < 1000; i++) { __asm volatile("nop"); }
+    __asm volatile(".word 0x0600000B");
+    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
     
     for (;;) {
         GPIO_OUT = 0x0000AAAA;
-        for (volatile int i = 0; i < 100000; i++) { __asm volatile("nop"); }
-        
-        /* Явная уступка планировщику */
-        taskYIELD();
+        for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
         
         GPIO_OUT = 0x0000DDDD;  /* Новый маркер после yield */
-        for (volatile int i = 0; i < 100000; i++) { __asm volatile("nop"); }
+        for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
     }
 }
 
-void vApplicationIdleHook(void)
+static void vTestTask2(void *pvParameters)
 {
-    static int count = 0;
-    if (count++ % 1000 == 0) {
-        GPIO_OUT = 0x0000CCCC;  /* Idle Task работает! */
+    (void)pvParameters;
+
+    GPIO_OUT = 0x0000CCCC;
+    __asm volatile(".word 0x0600000B");
+    
+    for (;;) {
+        GPIO_OUT = 0x0000EEEE;  /* Вторая задача работает! */
+        for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+        GPIO_OUT = 0x0000FFFF;  /* После yield второй задачи */
+        for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
     }
 }
 
 int main(void)
 {
-    TaskHandle_t xHandle = NULL;
+    TaskHandle_t xHandle1 = NULL;
+    TaskHandle_t xHandle2 = NULL;
     
-    /* === 0x0001: Вход в main === */
-    GPIO_OUT = 0x00000001;
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    GPIO_OUT = 0x00000001;  /* Вход в main */
     
-    /* === 0x0010: Перед xTaskCreate === */
-    GPIO_OUT = 0x00000010;
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
+    /* Создаём ПЕРВУЮ задачу */
+    xTaskCreate(vTestTask, "Test1", configMINIMAL_STACK_SIZE, NULL, 1, &xHandle1);
+    GPIO_OUT = 0x00000002;  /* После создания Task1 */
     
-    /* Создаем задачу */
-    BaseType_t xReturn = xTaskCreate(
-        vTestTask,
-        "Test",
-        configMINIMAL_STACK_SIZE,
-        NULL,
-        1,
-        &xHandle
-    );
+    /* Создаём ВТОРУЮ задачу */
+    xTaskCreate(vTestTask2, "Test2", configMINIMAL_STACK_SIZE, NULL, 1, &xHandle2);
+    GPIO_OUT = 0x00000003;  /* После создания Task2 */
     
-    /* === 0x0020 или 0x00EE: После xTaskCreate === */
-    if (xReturn == pdPASS) {
-        GPIO_OUT = 0x00000020;
-    } else {
-        GPIO_OUT = 0x000000EE;
-    }
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
-    
-    /* === 0x0030: Перед планировщиком === */
-    GPIO_OUT = 0x00000030;
-    for (volatile int i = 0; i < 100; i++) { __asm volatile("nop"); }
-    
-    /* === 0x0040: Запуск планировщика === */
-    GPIO_OUT = 0x00000040;
+    /* Показываем, какая задача текущая перед запуском */
+    GPIO_OUT = 0x00000004;
+
     vTaskStartScheduler();
     
-    /* === 0x00FF: Планировщик вернулся (плохо!) === */
-    GPIO_OUT = 0x000000FF;
+    GPIO_OUT = 0x000000FF;  /* Сюда не дойдём */
     for (;;);
-    
-    return 0;
 }
