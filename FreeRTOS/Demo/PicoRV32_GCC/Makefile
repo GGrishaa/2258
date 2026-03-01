@@ -4,13 +4,13 @@ OBJCOPY = riscv64-unknown-elf-objcopy
 
 SRC_DIR = ../../Source
 
-CFLAGS = -march=rv32izicsr -mabi=ilp32 -Os -ffreestanding -nostdlib -Wall
+CFLAGS = -march=rv32izicsr -mabi=ilp32 -O0 -ffreestanding -nostdlib -Wall -D__riscv_xlen=32 -mno-relax
 CFLAGS += -I../../Source/include
 CFLAGS += -I../../Source/portable/GCC/PicoRV32
 CFLAGS += -I../../Source/portable/GCC/RISC-V/chip_specific_extensions/PicoRV32_CSR
 CFLAGS += -I.
 
-ASFLAGS = -march=rv32i -mabi=ilp32 -x assembler-with-cpp $(CFLAGS)
+ASFLAGS = -march=rv32izicsr -mabi=ilp32 -x assembler-with-cpp $(CFLAGS)
 LDFLAGS = -nostdlib -Wl,-T,linker.ld,-Map=firmware.map
 
 KERNEL_C = $(SRC_DIR)/tasks.c \

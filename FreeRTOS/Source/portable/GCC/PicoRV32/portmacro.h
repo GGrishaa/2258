@@ -13,6 +13,12 @@
 #ifdef __cplusplus
     extern "C" {
 #endif
+
+#ifndef __riscv_xlen
+    #define __riscv_xlen 32
+#endif
+#define __riscv32 1
+
 #if __riscv_xlen == 64
     #define portSTACK_TYPE           uint64_t
     #define portBASE_TYPE            int64_t

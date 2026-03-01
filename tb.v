@@ -35,8 +35,8 @@ module system_tb;
         	irq <= 32'd0;
     	end else begin
         	irq_counter <= irq_counter + 1'd1;
-        	if (irq_counter >= 16'd9980 && irq_counter < 16'd10000) begin
-            	irq <= 32'd1;  // Импульс 20 тактов
+        	if (irq_counter >= 16'd9000 && irq_counter < 16'd10000) begin
+            	irq <= 32'd1;
         	end else begin
         		irq <= 32'd0;
         	end
@@ -56,7 +56,7 @@ module system_tb;
 
     // === Завершение симуляции ===
     initial begin
-        #1_000_000;
+        #50_000_000;
         $finish;
     end
 

@@ -23,6 +23,7 @@ const StackType_t xISRStackTop = (StackType_t)&xISRStack[256];
 /*-----------------------------------------------------------*/
 
 extern void freertos_risc_v_trap_handler(void);
+extern void xPortStartFirstTask(void);
 
 /* Заглушки для memcpy/memset (freestanding) */
 void *memcpy(void *dest, const void *src, size_t n) {
@@ -64,7 +65,7 @@ void vPortSetupTimerInterrupt(void)
 {
     #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
     GPIO_OUT = 0x00000100;
-    
+    //__asm volatile("csrw mtvec, %0" :: "r"(0x00000010));
     GPIO_OUT = 0x00000200;  
     
     /* Отключаем несуществующие CSR таймера */
@@ -81,33 +82,38 @@ void vPortSetupTimerInterrupt(void)
 
 
 /* Запуск первой задачи */
+#if 0
 void vPortStartFirstTask(void)
 {
+    #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
+    GPIO_OUT = 0x00000666;
     uint32_t ulCurrentTCB;
     uint32_t ulTopOfStack;
     uint32_t ulEntryPoint;
     
     /* Получаем адрес текущего TCB */
     __asm volatile ( "lw %0, pxCurrentTCB" : "=r" (ulCurrentTCB) );
-    
+
     /* Первый элемент TCB - это pxTopOfStack */
     __asm volatile ( "lw %0, 0(%1)" : "=r" (ulTopOfStack) : "r" (ulCurrentTCB) );
-    
+
     /* Читаем entry point из стека (смещение 31 * 4 байта) */
     __asm volatile ( "lw %0, 124(%1)" : "=r" (ulEntryPoint) : "r" (ulTopOfStack) );
-    
+
     /* Записываем в mepc */
     __asm volatile ( "csrw mepc, %0" :: "r" (ulEntryPoint) );
-    
+    GPIO_OUT = 0x00000AAA;
     /* Включаем MIE в mstatus */
     __asm volatile ( "csrs mstatus, %0" :: "r" (0x00000008) );
-    
+    GPIO_OUT = 0x00000BBB;
     /* Возврат в задачу */
     __asm volatile ( "mret" );
-    
+    GPIO_OUT = 0x00000CCC;
     /* Недостижимый код */
     for (;;);
+    GPIO_OUT = 0x00000DDD;
 }
+#endif
 
 /*-----------------------------------------------------------*/
 
@@ -118,7 +124,7 @@ BaseType_t xPortStartScheduler(void)
     vPortSetupTimerInterrupt();
     #define GPIO_OUT        (*(volatile uint32_t *)0x10010000)
     GPIO_OUT = 0x00000444;
-    vPortStartFirstTask();
+    xPortStartFirstTask();
     GPIO_OUT = 0x00000555;
     return pdFAIL;
 }
