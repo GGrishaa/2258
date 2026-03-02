@@ -2051,6 +2051,10 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
     {
         /* Ensure interrupts don't access the task lists while the lists are being
          * updated. */
+        #define GPIO_OUT (*(volatile uint32_t *)0x10010000)
+        GPIO_OUT = 0x0000ABCD;  /* Новая задача добавляется в Ready List */
+        GPIO_OUT = (uint32_t)pxNewTCB;  /* Адрес TCB */
+        GPIO_OUT = pxNewTCB->uxPriority;  /* Приоритет */
         taskENTER_CRITICAL();
         {
             uxCurrentNumberOfTasks = ( UBaseType_t ) ( uxCurrentNumberOfTasks + 1U );
@@ -5126,6 +5130,7 @@ BaseType_t xTaskIncrementTick( void )
         {
             GPIO_OUT = 0x00009006;
             xYieldPendings[ 0 ] = pdFALSE;
+            GPIO_OUT = (uint32_t)pxCurrentTCB;
             GPIO_OUT = 0x00009010;
             traceTASK_SWITCHED_OUT();
             GPIO_OUT = 0x00009011;
