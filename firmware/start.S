@@ -48,11 +48,16 @@ real_irq_handler:
     li   a0, 0x03000010
     li   a1, 0xEEEEEEEE
     sw   a1, 0(a0)
+    li   a0, 0x03000010
+    sw   sp, 0(a0)
     addi sp, sp, -128
 
     /* 🔑 1. Читаем PC прерванной задачи из q1 и кладём в sp[0] */
-    .word 0x0000028B      /* getq x5, q1 */
+    .word 0x0000028B      /* getq x5, q1 - .word 0x0001028B*/
     sw   x5, 0(sp)
+    
+    li   a0, 0x03000010
+    sw   x5, 0(a0)
 
     /* 2. Сохраняем x1 и остальные регистры */
     sw   x1,  8(sp)
@@ -100,6 +105,11 @@ real_irq_handler:
     lw   x5, pxCurrentTCB
     lw   sp, 0(x5)
 
+    lw   a1, pxCurrentTCB
+    lw   a1, 0(a1)        /* a1 = адрес структуры TCB */
+    li   a0, 0x03000010
+    sw   a1, 0(a0)
+
     /* 6. Восстанавливаем Critical nesting */
     lw   x5, 120(sp)
     lw   x6, pxCriticalNesting
@@ -141,6 +151,11 @@ real_irq_handler:
 
     /* 🔑 8. Берём PC новой задачи из sp[0], кладём в q0 и выходим */
     lw   x1, 0(sp)
+    and  x1, x1, -2
+
+    li   a0, 0x03000010
+    sw   x1, 0(a0)
+
     addi sp, sp, 128
     .word 0x0200800B     /* setq q0, x1 */
     .word 0x0400000B     /* retirq */

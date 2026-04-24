@@ -5,26 +5,29 @@
 #define GPIO (*(volatile uint32_t*)0x03000010)
 
 void vTaskBlink1(void *pv) {
-    GPIO = 0xAAAAAAAA;
     for(;;) {
-        GPIO ^= 0xE;
-        volatile int d; for(d=0; d<500; d++);
+        GPIO = 0xAAAAAAAA;
+        for(int d=0; d<2000; d++);
+        GPIO = 0xAAAAFFFF;
+        for(int t=0; t<2000; t++);
     }
 }
 
 void vTaskBlink2(void *pv) {
-    GPIO = 0x22222222;
     for(;;) {
-        GPIO ^= (16 << 1);
-        volatile int d; for(d=0; d<500; d++);
+        GPIO = 0x22222222;
+        for(int d=0; d<2000; d++);
+        GPIO = 0x22222200;
+        for(int t=0; t<2000; t++);
     }
 }
 
 void vTaskBlink3(void *pv) {
-    GPIO = 0xCCCCCCCC;
     for(;;) {
-        GPIO ^= (16 << 2);
-        volatile int d; for(d=0; d<500; d++);
+        GPIO = 0xCCCCCCCC;
+        for(int d=0; d<2000; d++);
+        GPIO = 0xCCCCCCCD;
+        for(int t=0; t<2000; t++);
     }
 }
 
