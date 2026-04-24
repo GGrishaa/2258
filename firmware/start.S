@@ -45,10 +45,13 @@ real_start:
 .align 2
 .global real_irq_handler
 real_irq_handler:
+    li   a0, 0x03000010
+    li   a1, 0xEEEEEEEE
+    sw   a1, 0(a0)
     addi sp, sp, -128
 
     /* 🔑 1. Читаем PC прерванной задачи из q1 и кладём в sp[0] */
-    .word 0x0001028B      /* getq x5, q1 */
+    .word 0x0000028B      /* getq x5, q1 */
     sw   x5, 0(sp)
 
     /* 2. Сохраняем x1 и остальные регистры */
@@ -101,6 +104,9 @@ real_irq_handler:
     lw   x5, 120(sp)
     lw   x6, pxCriticalNesting
     sw   x5, 0(x6)
+
+    li   a0, 100000
+    .word 0x0A05000B
 
     /* 7. Восстанавливаем регистры */
     lw   x1,  8(sp)

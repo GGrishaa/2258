@@ -884,13 +884,22 @@ module picorv32 #(
 			decoded_rs2 <= mem_rdata_latched[24:20];
 
 			if (mem_rdata_latched[6:0] == 7'b0001011 && mem_rdata_latched[31:25] == 7'b0000000 && ENABLE_IRQ && ENABLE_IRQ_QREGS)
-				decoded_rs1[regindex_bits-1] <= 1; // instr_getq
+				decoded_rs1 <= irqregs_offset | mem_rdata_latched[19:15];
 
 			if (mem_rdata_latched[6:0] == 7'b0001011 && mem_rdata_latched[31:25] == 7'b0000010 && ENABLE_IRQ) begin
     			if (ENABLE_IRQ_QREGS)
-        			decoded_rs1 <= irqregs_offset | mem_rdata_latched[11:7];  /* rd field = queue index */
+        			decoded_rs1 <= irqregs_offset;  // ✅ Всегда q0, индекс = 0
     			else
-        			decoded_rs1 <= mem_rdata_latched[19:15];  /* rs1 field = register */
+        			decoded_rs1 <= 3;  // фолбэк: x3/gp
+    				eoi <= 0;
+    				irq_active <= 0;
+    				latched_branch <= 1;
+    				latched_store <= 1;
+    				`debug($display("LD_RS1: %2d 0x%08x", decoded_rs1, cpuregs_rs1);)
+    				reg_out <= CATCH_MISALIGN ? (cpuregs_rs1 & 32'h fffffffe) : cpuregs_rs1;
+    				dbg_rs1val <= cpuregs_rs1;
+    				dbg_rs1val_valid <= 1;
+    				cpu_state <= cpu_state_fetch;
 			end
 
 			compressed_instr <= 0;
@@ -1668,7 +1677,8 @@ module picorv32 #(
 						latched_store <= 1;
 						cpu_state <= cpu_state_fetch;
 					end
-					ENABLE_IRQ && instr_retirq: begin
+					ENABLE_IRQ && ENABLE_IRQ_QREGS && instr_retirq: begin
+						decoded_rs1 <= irqregs_offset;
 						eoi <= 0;
 						irq_active <= 0;
 						latched_branch <= 1;
