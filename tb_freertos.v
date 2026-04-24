@@ -5,10 +5,8 @@ module tb_freertos;
     reg resetn;
     wire [31:0] gpio_out;
 
-    // Тактовый сигнал 100 МГц (период 10 нс)
     always #5 clk = ~clk;
 
-    // Подключаем picosoc с увеличенной памятью (8 КБ)
     picosoc #(
         .MEM_WORDS(16384)
     ) uut (
