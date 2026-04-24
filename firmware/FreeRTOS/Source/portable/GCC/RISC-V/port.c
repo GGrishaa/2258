@@ -43,18 +43,16 @@ extern void xPortStartFirstTask(void);
 
 StackType_t *pxPortInitialiseStack(StackType_t *pxTopOfStack, TaskFunction_t pxCode, void *pvParameters)
 {
-    /* 🔍 МАРКЕР: какая задача инициализируется */
-    (*(volatile uint32_t*)0x03000010) = 0x1000 | ((uint32_t)pxCode & 0xFFF);
 
     pxTopOfStack -= 32;
     pxTopOfStack = (StackType_t *)((uint32_t)pxTopOfStack & ~0xF);
     for(int i = 0; i < 32; i++) pxTopOfStack[i] = 0;
 
-    pxTopOfStack[0]  = (StackType_t)pxCode;       /* sp[0]: PC */
-    pxTopOfStack[1]  = (StackType_t)0x00001880;   /* mstatus */
-    pxTopOfStack[2]  = (StackType_t)0;            /* x1 (ra) */
-    pxTopOfStack[8]  = (StackType_t)pvParameters; /* x10 (a0) */
-    pxTopOfStack[30] = (StackType_t)0;            /* Critical Nesting */
+    pxTopOfStack[0]  = (StackType_t)pxCode;
+    pxTopOfStack[1]  = (StackType_t)0x00001880;
+    pxTopOfStack[2]  = (StackType_t)0;
+    pxTopOfStack[8]  = (StackType_t)pvParameters;
+    pxTopOfStack[30] = (StackType_t)0;
     
     return pxTopOfStack;
 }
@@ -85,7 +83,7 @@ BaseType_t xPortStartScheduler(void)
     #endif
 
     vPortSetupTimerInterrupt();
-    __asm__ volatile (".word 0x0600000B");  /* maskirq: разрешаем прерывания */
+    __asm__ volatile (".word 0x0600000B");
     xPortStartFirstTask();
     return pdFAIL;
 }

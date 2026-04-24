@@ -1,24 +1,15 @@
 #include "portContext.h"
 
-/* ==========================================================
- * ВЕКТОР СБРОСА
- * ========================================================== */
 .section .text.reset_vector
 .globl _start
 _start:
     j real_start
 
-/* ==========================================================
- * IRQ ВЕКТОР
- * ========================================================== */
 .section .text.irq_vector
 .globl irq_vector
 irq_vector:
     j real_irq_handler
 
-/* ==========================================================
- * СТАРТ СИСТЕМЫ
- * ========================================================== */
 .section .text.real_start
 real_start:
     .option push
@@ -38,28 +29,15 @@ real_start:
 2:
     j 2b
 
-/* ==========================================================
-* ОБРАБОТЧИК ПРЕРЫВАНИЙ
-* ========================================================== */
 .section .text.irq_real
 .align 2
 .global real_irq_handler
 real_irq_handler:
-    li   a0, 0x03000010
-    li   a1, 0xEEEEEEEE
-    sw   a1, 0(a0)
-    li   a0, 0x03000010
-    sw   sp, 0(a0)
     addi sp, sp, -128
 
-    /* 🔑 1. Читаем PC прерванной задачи из q1 и кладём в sp[0] */
-    .word 0x0000028B      /* getq x5, q1 - .word 0x0001028B*/
+    .word 0x0000028B
     sw   x5, 0(sp)
     
-    li   a0, 0x03000010
-    sw   x5, 0(a0)
-
-    /* 2. Сохраняем x1 и остальные регистры */
     sw   x1,  8(sp)
     sw   x6,  16(sp)
     sw   x7,  20(sp)
@@ -90,27 +68,21 @@ real_irq_handler:
     sw   x31, 116(sp)
 #endif
 
-    /* 3. Critical nesting и TCB */
     lw   x5, pxCriticalNesting
     sw   x5, 120(sp)
     lw   x5, pxCurrentTCB
     sw   sp, 0(x5)
 
-    /* 4. FreeRTOS tick & switch */
     call xTaskIncrementTick
     beqz x10, 1f
     call vTaskSwitchContext
 1:
-    /* 5. Загружаем стек новой задачи */
     lw   x5, pxCurrentTCB
     lw   sp, 0(x5)
 
     lw   a1, pxCurrentTCB
-    lw   a1, 0(a1)        /* a1 = адрес структуры TCB */
-    li   a0, 0x03000010
-    sw   a1, 0(a0)
+    lw   a1, 0(a1)
 
-    /* 6. Восстанавливаем Critical nesting */
     lw   x5, 120(sp)
     lw   x6, pxCriticalNesting
     sw   x5, 0(x6)
@@ -118,7 +90,6 @@ real_irq_handler:
     li   a0, 100000
     .word 0x0A05000B
 
-    /* 7. Восстанавливаем регистры */
     lw   x1,  8(sp)
     lw   x6,  16(sp)
     lw   x7,  20(sp)
@@ -149,15 +120,11 @@ real_irq_handler:
     lw   x31, 116(sp)
 #endif
 
-    /* 🔑 8. Берём PC новой задачи из sp[0], кладём в q0 и выходим */
     lw   x1, 0(sp)
     and  x1, x1, -2
 
-    li   a0, 0x03000010
-    sw   x1, 0(a0)
-
     addi sp, sp, 128
-    .word 0x0200800B     /* setq q0, x1 */
-    .word 0x0400000B     /* retirq */
+    .word 0x0200800B
+    .word 0x0400000B
 
     j .

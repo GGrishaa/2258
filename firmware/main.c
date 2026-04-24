@@ -7,27 +7,27 @@
 void vTaskBlink1(void *pv) {
     for(;;) {
         GPIO = 0xAAAAAAAA;
-        for(int d=0; d<2000; d++);
+        for(volatile int d=0; d<1000; d++) { ; }
         GPIO = 0xAAAAFFFF;
-        for(int t=0; t<2000; t++);
+        for(volatile int t=0; t<1000; t++) { ; }
     }
 }
 
 void vTaskBlink2(void *pv) {
     for(;;) {
         GPIO = 0x22222222;
-        for(int d=0; d<2000; d++);
+        for(volatile int d=0; d<1000; d++) { ; }
         GPIO = 0x22222200;
-        for(int t=0; t<2000; t++);
+        for(volatile int t=0; t<1000; t++) { ; }
     }
 }
 
 void vTaskBlink3(void *pv) {
     for(;;) {
         GPIO = 0xCCCCCCCC;
-        for(int d=0; d<2000; d++);
+        for(volatile int d=0; d<1000; d++) { ; }
         GPIO = 0xCCCCCCCD;
-        for(int t=0; t<2000; t++);
+        for(volatile int t=0; t<1000; t++) { ; }
     }
 }
 

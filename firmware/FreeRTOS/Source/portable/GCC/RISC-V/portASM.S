@@ -1,6 +1,5 @@
 #include "portContext.h"
 
-/* Chip-specific extensions */
 #if defined( portasmHAS_CLINT ) && defined( portasmHAS_MTIME )
     #error The portasmHAS_CLINT constant has been deprecated.
 #endif
@@ -19,14 +18,12 @@
     #define portasmHAS_SIFIVE_CLINT 0
 #endif
 
-/* Global symbols */
 .global xPortStartFirstTask
 .global freertos_risc_v_trap_handler
 .global freertos_risc_v_exception_handler
 .global freertos_risc_v_interrupt_handler
 .global freertos_risc_v_mtimer_interrupt_handler
 
-/* External references */
 .extern vTaskSwitchContext
 .extern xTaskIncrementTick
 .extern pullMachineTimerCompareRegister
@@ -39,8 +36,6 @@
 .weak freertos_risc_v_application_exception_handler
 .weak freertos_risc_v_application_interrupt_handler
 
-/*-----------------------------------------------------------*/
-/* Timer update macro (for MTIME support) */
 .macro portUPDATE_MTIMER_COMPARE_REGISTER
     load_x a0, pullMachineTimerCompareRegister
     load_x a1, pullNextTime
@@ -69,14 +64,11 @@
     #endif
 .endm
 
-/* ==========================================================
-* ПЕРВЫЙ ЗАПУСК ЗАДАЧИ
-* ========================================================== */
 xPortStartFirstTask:
     lw    sp, pxCurrentTCB
     lw    sp, 0(sp)
 
-    lw    x1,  0(sp)      /* sp[0] = PC задачи */
+    lw    x1,  0(sp)
     lw    x5,  12(sp)
     lw    x6,  16(sp)
     lw    x7,  20(sp)
@@ -110,6 +102,6 @@ xPortStartFirstTask:
     lw    x6, pxCriticalNesting
     sw    x5, 0(x6)
 
-    addi  sp, sp, 128     /* ИСПРАВЛЕНО: было 124 */
+    addi  sp, sp, 128
     jr    x1
 
