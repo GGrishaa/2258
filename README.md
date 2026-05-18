@@ -15,11 +15,17 @@
 
 ### Сборка и запуск симуляции:
 git clone https://github.com/GGrishaa/2258.git
+
 cd 2258
+
 git checkout freertos-port
+
 cd firmware
+
 make rebuild
+
 cd ..
+
 ./sim.sh | grep GPIO
 
 ### Ожидаемый вывод:
